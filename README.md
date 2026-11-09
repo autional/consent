@@ -30,7 +30,9 @@ pnpm dev
 
 演示数据只有 3 条（R1/R2/R3），决策只改内存状态；重启 mock 即重置。
 
-正式后端：`shared/service-consent`（3 表 + 3 端点 + 审计 fail-closed）。生产构建默认走 `/bff/consent/api/v1/ops`；本地 dev 默认仍走 mock，联调真实后端按下方 `VITE_CONSENT_BASE_URL=/api/v1/ops` 设置。
+正式后端：`shared/service-consent`（3 表 + 3 端点 + 审计 fail-closed），已在 prod 部署。生产构建默认走 `/bff/consent/api/v1/ops`；本地 dev 默认仍走 mock，联调真实后端按下方 `VITE_CONSENT_BASE_URL=/api/v1/ops` 设置。
+
+> 2026-11-09：代码已推 `2d091af`，但线上仍是旧构建；Vercel `api-deployments-free-per-day` 配额重置于 2026-11-10 20:00（北京时间），之后重部署两区。
 
 ### 本地联调真实 service-consent
 
