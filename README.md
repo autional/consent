@@ -32,6 +32,26 @@ pnpm dev
 
 正式后端骨架：`shared/service-consent`（`go run ./cmd/server`；3 表 + 3 端点 + 审计 fail-closed）。网关路由/配置中心待接，当前 PWA 默认仍走 mock。
 
+### 本地联调真实 service-consent
+
+```bash
+# 终端 1：后端（内存库 + 演示数据）
+cd shared/service-consent
+CONSENT_REQUIRE_ADMIN=false CONSENT_INTERNAL_KEY= \
+CONSENT_SEED_DEMO=1 CONSENT_DEMO_TENANT=tenant-a \
+go run ./cmd/server
+
+# 终端 2：前端（Vite 代理 /api/v1 -> :11030）
+cd .refs/site-consent
+VITE_CONSENT_BASE_URL=/api/v1/ops \
+VITE_CONSENT_DEV_HEADERS=1 \
+VITE_CONSENT_PROXY_URL=http://localhost:11030 \
+pnpm dev
+# 打开 http://localhost:13113/?demo=1
+```
+
+`VITE_CONSENT_DEV_HEADERS=1` 只在 dev 注入 `X-User-ID/X-Tenant-ID/X-User-Roles`；生产由网关注入，前端不伪造。
+
 本地默认 `REGION=cn`、`SITE_URL=https://consent.autional.cn`、`API_ORIGIN=http://localhost:11080`；生产构建（`VERCEL_ENV=production`）缺 `REGION/SITE_URL/API_ORIGIN/VITE_OAUTH_CLIENT_ID` 直接失败。
 
 ## 环境变量
