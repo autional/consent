@@ -32,7 +32,7 @@ pnpm dev
 
 正式后端：`shared/service-consent`（3 表 + 3 端点 + 审计 fail-closed），已在 prod 部署。生产构建默认走 `/bff/consent/api/v1/ops`；本地 dev 默认仍走 mock，联调真实后端按下方 `VITE_CONSENT_BASE_URL=/api/v1/ops` 设置。
 
-> 2026-11-09：代码已推 `2d091af`，但线上仍是旧构建；Vercel `api-deployments-free-per-day` 配额重置于 2026-11-10 20:00（北京时间），之后重部署两区。
+> 2026-11-10：两区已重新部署 `79f2c43`；线上 `env.js` 已含 `VITE_CONSENT_BASE_URL=/bff/consent/api/v1/ops`，Playwright 线上列表→批准通过。
 
 ### 本地联调真实 service-consent
 
