@@ -20,6 +20,16 @@ pnpm typecheck
 pnpm test
 ```
 
+### 本地演示（后端未实现时）
+
+```bash
+pnpm mock           # 内存 mock API，127.0.0.1:11080
+pnpm dev
+# 打开 http://localhost:13113/?demo=1
+```
+
+演示数据只有 3 条（R1/R2/R3），决策只改内存状态；重启 mock 即重置。
+
 本地默认 `REGION=cn`、`SITE_URL=https://consent.autional.cn`、`API_ORIGIN=http://localhost:11080`；生产构建（`VERCEL_ENV=production`）缺 `REGION/SITE_URL/API_ORIGIN/VITE_OAUTH_CLIENT_ID` 直接失败。
 
 ## 环境变量
