@@ -39,7 +39,7 @@ pnpm dev
 ```bash
 # 终端 1：后端（内存库 + 演示数据）
 cd shared/service-consent
-CONSENT_REQUIRE_ADMIN=false CONSENT_INTERNAL_KEY= \
+CONSENT_REQUIRE_ADMIN=false \
 CONSENT_SEED_DEMO=1 CONSENT_DEMO_TENANT=tenant-a \
 go run ./cmd/server
 
