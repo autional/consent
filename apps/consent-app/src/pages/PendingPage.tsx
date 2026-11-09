@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { AuthRequiredError, listPending } from '../lib/api';
-import { beginLogin, getToken } from '../lib/auth';
+import { beginLogin, demoAvailable, enableDemo, getToken } from '../lib/auth';
 import { formatRemaining, riskLabel, statusLabel, type ConsentRequest } from '../lib/format';
 
 export default function PendingPage() {
@@ -43,12 +43,19 @@ export default function PendingPage() {
         <p className="muted">
           用平台账号登录后，查看待确认请求。低风险自动执行，敏感动作需要你批准。
         </p>
-        <button
-          className="btn btn-primary"
-          onClick={() => beginLogin('/').catch((e) => setError(String(e)))}
-        >
-          登录并查看
-        </button>
+        <div className="hero-actions">
+          <button
+            className="btn btn-primary"
+            onClick={() => beginLogin('/').catch((e) => setError(String(e)))}
+          >
+            登录并查看
+          </button>
+          {demoAvailable() && (
+            <button className="btn btn-ghost" onClick={enableDemo}>
+              本地演示（mock）
+            </button>
+          )}
+        </div>
         {error && <p className="error">{error}</p>}
       </section>
     );

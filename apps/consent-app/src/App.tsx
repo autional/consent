@@ -1,5 +1,5 @@
 import { Link, Route, Routes, useLocation } from 'react-router';
-import { beginLogin, getToken, logout } from './lib/auth';
+import { beginLogin, getToken, isDemo, logout } from './lib/auth';
 import PendingPage from './pages/PendingPage';
 import ConsentPage from './pages/ConsentPage';
 import CallbackPage from './pages/CallbackPage';
@@ -24,7 +24,10 @@ function Header() {
       </Link>
       <div className="topbar-actions">
         {loggedIn ? (
-          <button className="btn btn-ghost" onClick={logout}>退出</button>
+          <>
+            {isDemo() && <span className="demo-badge">演示</span>}
+            <button className="btn btn-ghost" onClick={logout}>退出</button>
+          </>
         ) : (
           <button className="btn btn-primary" onClick={onLogin}>登录</button>
         )}

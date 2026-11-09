@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "pnpm --filter @autional/consent-app dev",
+    "mock": "node apps/consent-app/mock/server.mjs",
     "build": "pnpm --filter @autional/consent-app... build",
     "preview": "pnpm --filter @autional/consent-app preview",
     "typecheck": "pnpm --filter @autional/consent-app typecheck",

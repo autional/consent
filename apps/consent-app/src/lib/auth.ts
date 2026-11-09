@@ -4,6 +4,27 @@ const TOKEN_KEY = 'consent.access_token';
 const VERIFIER_KEY = 'consent.pkce.verifier';
 const STATE_KEY = 'consent.pkce.state';
 const RETURN_KEY = 'consent.return_to';
+const DEMO_KEY = 'consent.demo';
+
+export function demoAvailable(): boolean {
+  return import.meta.env.DEV;
+}
+
+function demoEnabled(): boolean {
+  if (!import.meta.env.DEV) return false;
+  if (typeof window === 'undefined') return false;
+  if (sessionStorage.getItem(DEMO_KEY) === '1') return true;
+  return new URLSearchParams(window.location.search).has('demo');
+}
+
+export function enableDemo(): void {
+  sessionStorage.setItem(DEMO_KEY, '1');
+  window.location.assign('/');
+}
+
+export function disableDemo(): void {
+  sessionStorage.removeItem(DEMO_KEY);
+}
 
 function b64url(bytes: Uint8Array): string {
   let s = '';
@@ -23,6 +44,10 @@ async function challengeFor(verifier: string): Promise<string> {
 }
 
 export function getToken(): string {
+  if (demoEnabled()) {
+    sessionStorage.setItem(DEMO_KEY, '1');
+    return 'demo-token';
+  }
   return sessionStorage.getItem(TOKEN_KEY) ?? '';
 }
 
@@ -30,12 +55,21 @@ export function clearToken(): void {
   sessionStorage.removeItem(TOKEN_KEY);
 }
 
+export function isDemo(): boolean {
+  return demoEnabled();
+}
+
 export function logout(): void {
   clearToken();
+  disableDemo();
   window.location.assign('/');
 }
 
 export async function beginLogin(returnTo = '/'): Promise<void> {
+  if (import.meta.env.DEV && new URLSearchParams(window.location.search).has('demo')) {
+    enableDemo();
+    return;
+  }
   const cfg = getConfig();
   if (!cfg.VITE_OAUTH_CLIENT_ID) {
     throw new Error('缺少 VITE_OAUTH_CLIENT_ID：请给 consent 注册独立 OAuth client');
