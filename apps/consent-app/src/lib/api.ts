@@ -44,19 +44,19 @@ function unwrap<T>(body: unknown): T {
 }
 
 export async function listPending(): Promise<ConsentRequest[]> {
-  const body = await request<unknown>('/ops/v1/consents?status=pending');
+  const body = await request<unknown>('/consents?status=pending');
   const data = unwrap<ConsentRequest[] | { items?: ConsentRequest[] }>(body);
   if (Array.isArray(data)) return data;
   return data.items ?? [];
 }
 
 export async function getConsent(id: string): Promise<ConsentRequest> {
-  const body = await request<unknown>(`/ops/v1/consents/${encodeURIComponent(id)}`);
+  const body = await request<unknown>(`/consents/${encodeURIComponent(id)}`);
   return unwrap<ConsentRequest>(body);
 }
 
 export async function decide(id: string, decision: 'approved' | 'rejected'): Promise<ConsentRequest> {
-  const body = await request<unknown>(`/ops/v1/consents/${encodeURIComponent(id)}/decision`, {
+  const body = await request<unknown>(`/consents/${encodeURIComponent(id)}/decision`, {
     method: 'POST',
     body: JSON.stringify({ decision }),
   });
