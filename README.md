@@ -36,10 +36,19 @@ pnpm test
 
 ## Vercel
 
-- `.cn` 项目 `cn-consent`，`.com` 项目 `consent`；同一仓、同一 `vercel.ts`，只换环境变量。
+- `.cn` 项目 `cn-consent`（`prj_6Ib6WYGRtuWOvQBhKtj3ozPJOzLW`），`.com` 项目 `consent`（`prj_8QPYe7AUcuKh9poFaynEH6b0tJf8`）；同一仓、同一 `vercel.ts`，只换环境变量。
 - 推 `main` 自动部署；CLI 重投按 `shared/entry-proxies/README.md`。
 - `vercel.ts` 由 CLI 本地编译：命令环境与 Vercel 项目 env 都要有 `API_ORIGIN`。
 - Hobby 下成员仓必须 public（ADR-017）。
+
+## 部署状态（2026-11-09）
+
+- GitHub：`https://github.com/autional/consent`，`main` 已推送。
+- Vercel：两个项目均已创建并部署（`cn-consent` / `consent`），Production READY。
+- `.com`：GoDaddy 已加 CNAME `consent -> 4f90496b90f22370.vercel-dns-017.com.`；证书已签发，`https://consent.autional.com` 返回 200（本机 DNS 可能需刷新）。
+- `.cn`：待 DNSPod 添加 CNAME `consent -> 181a2b43c72b9f9d.vercel-dns-017.com.`（TTL 600）；未添加前无证书。
+- OAuth：`VITE_OAUTH_CLIENT_ID` 当前是占位 `client-pending-consent`；注册 consent 独立 client 后替换并重部署。
+- API：两区 `FRONTEND_API_MODE=proxy`；若改 `direct`，需把 `consent.autional.cn/.com` 加进 `oauth_clients.cors_origins`。
 
 ## OAuth client
 

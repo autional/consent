@@ -9,3 +9,6 @@ apps/*/public/robots.txt
 !.env.example
 .DS_Store
 *.local
+
+.vercel
+.env*
