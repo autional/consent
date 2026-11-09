@@ -45,12 +45,11 @@ pnpm test
 
 - GitHub：`https://github.com/autional/consent`，`main` 已推送。
 - Vercel：两个项目均已创建并部署（`cn-consent` / `consent`），Production READY。
-- `.com`：GoDaddy 已加 CNAME `consent -> 4f90496b90f22370.vercel-dns-017.com.`；证书已签发，`https://consent.autional.com` 返回 200（本机 DNS 可能需刷新）。
-- `.cn`：待 DNSPod 添加 CNAME `consent -> 181a2b43c72b9f9d.vercel-dns-017.com.`（TTL 600）；未添加前无证书。
-- OAuth：独立 client `client-9R0t08yqe4gF` 已创建（public；redirect `.cn/.com` + localhost；`cors_origins` 两域）。
-- Vercel env 已写入 `VITE_OAUTH_CLIENT_ID=client-9R0t08yqe4gF`。
-- **CN**：最新构建 `dpl_a7wq62lqz...` 已含正确 client id（部署产物 `env.js` 已验证）；但 `.cn` 域名还缺 DNSPod CNAME，浏览器无证书。
-- **COM**：最新构建 `dpl_ctz200dim...` 已含正确 client id；`https://consent.autional.com` 200。
+- `.com`：GoDaddy CNAME `consent -> 4f90496b90f22370.vercel-dns-017.com.`；证书已签发，`https://consent.autional.com` 200。
+- `.cn`：DNSPod CNAME `consent -> 181a2b43c72b9f9d.vercel-dns-017.com.` 已配置；Vercel 证书已签发（CN=consent.autional.cn）；`https://consent.autional.cn` 200。
+- OAuth：独立 client `client-9R0t08yqe4gF`（public；redirect `.cn/.com` + localhost；`cors_origins` 两域）；两区 authorize 探针均 302 → 各自 `/oauth/callback?error=login_required`。
+- 两区 `env.js` 均已含 `VITE_OAUTH_CLIENT_ID=client-9R0t08yqe4gF`。
+- `/`、`/env.js`、`/manifest.webmanifest`、`/sw.js`、`/oauth/callback`、`/c/<id>`（Accept html）均 200；缺失静态资源 404。
 - 两区 Git 自动部署均可用（push `main` → 自动构建）；2026-11-09 手动 API 部署额度耗尽（100/天），不影响 Git 部署。
 - API：两区 `FRONTEND_API_MODE=proxy`；若改 `direct`，CORS 已在 client 上登记两域。
 
