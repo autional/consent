@@ -52,6 +52,8 @@ pnpm dev
 # 打开 http://localhost:13113/?demo=1
 ```
 
+> Git Bash 下必须带 `MSYS_NO_PATHCONV=1`，否则 `/api/v1/ops` 会被 MSYS 转成 Windows 路径。
+
 `VITE_CONSENT_DEV_HEADERS=1` 只在 dev 注入 `X-User-ID/X-Tenant-ID/X-User-Roles`；生产由网关注入，前端不伪造。
 
 本地默认 `REGION=cn`、`SITE_URL=https://consent.autional.cn`、`API_ORIGIN=http://localhost:11080`；生产构建（`VERCEL_ENV=production`）缺 `REGION/SITE_URL/API_ORIGIN/VITE_OAUTH_CLIENT_ID` 直接失败。
