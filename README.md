@@ -30,6 +30,8 @@ pnpm dev
 
 演示数据只有 3 条（R1/R2/R3），决策只改内存状态；重启 mock 即重置。
 
+正式后端骨架：`shared/service-consent`（`go run ./cmd/server`；3 表 + 3 端点 + 审计 fail-closed）。网关路由/配置中心待接，当前 PWA 默认仍走 mock。
+
 本地默认 `REGION=cn`、`SITE_URL=https://consent.autional.cn`、`API_ORIGIN=http://localhost:11080`；生产构建（`VERCEL_ENV=production`）缺 `REGION/SITE_URL/API_ORIGIN/VITE_OAUTH_CLIENT_ID` 直接失败。
 
 ## 环境变量
