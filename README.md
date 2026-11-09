@@ -49,9 +49,9 @@ pnpm test
 - `.cn`：待 DNSPod 添加 CNAME `consent -> 181a2b43c72b9f9d.vercel-dns-017.com.`（TTL 600）；未添加前无证书。
 - OAuth：独立 client `client-9R0t08yqe4gF` 已创建（public；redirect `.cn/.com` + localhost；`cors_origins` 两域）。
 - Vercel env 已写入 `VITE_OAUTH_CLIENT_ID=client-9R0t08yqe4gF`。
-- **CN**：最新构建 `dpl_4BVncgqD6CFNuFf4QwC8eQ9iZVk5` 已含正确 client id（部署产物 `env.js` 已验证）；但 `.cn` 域名还缺 DNSPod CNAME，浏览器无证书。
-- **COM**：当前 `dpl_7hWURiw432y6UGocAzyuewsd3QZr` 仍是旧构建，`env.js` 里还是 `client-pending-consent`；2026-11-09 部署额度耗尽（100/天），**需在 2026-11-10 15:42 CST 后重部署**。
-- Git 自动部署已启用（`createDeployments=enabled`）；额度恢复后 push `main` 会触发 `cn-consent` / `consent`。
+- **CN**：最新构建 `dpl_a7wq62lqz...` 已含正确 client id（部署产物 `env.js` 已验证）；但 `.cn` 域名还缺 DNSPod CNAME，浏览器无证书。
+- **COM**：最新构建 `dpl_ctz200dim...` 已含正确 client id；`https://consent.autional.com` 200。
+- 两区 Git 自动部署均可用（push `main` → 自动构建）；2026-11-09 手动 API 部署额度耗尽（100/天），不影响 Git 部署。
 - API：两区 `FRONTEND_API_MODE=proxy`；若改 `direct`，CORS 已在 client 上登记两域。
 
 ## OAuth client
