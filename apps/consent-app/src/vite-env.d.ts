@@ -10,6 +10,7 @@ interface AppConfig {
   VITE_AUTH_BASE_URL: string;
   VITE_OAUTH_CLIENT_ID: string;
   VITE_CONSENT_BASE_URL: string;
+  VITE_CONSENT_DEV_HEADERS: string;
   VITE_CDN_HOST: string;
   VITE_COOKIE_DOMAIN: string;
   VITE_PORTAL_CONFIG: Record<string, PortalEntry>;

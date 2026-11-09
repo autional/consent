@@ -40,6 +40,7 @@ write(
   VITE_AUTH_BASE_URL: "${buildEnv.authBase}",
   VITE_OAUTH_CLIENT_ID: "${buildEnv.oauthClientId}",
   VITE_CONSENT_BASE_URL: "${buildEnv.consentBase}",
+  VITE_CONSENT_DEV_HEADERS: "${buildEnv.consentDevHeaders ? '1' : '0'}",
   VITE_CDN_HOST: "${buildEnv.cdnHost}",
   VITE_COOKIE_DOMAIN: ".${buildEnv.rootDomain}",
   VITE_PORTAL_CONFIG: {

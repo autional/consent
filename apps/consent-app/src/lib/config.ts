@@ -6,6 +6,7 @@ const DEV_FALLBACK: AppConfig = {
   VITE_AUTH_BASE_URL: 'https://auth.autional.cn',
   VITE_OAUTH_CLIENT_ID: '',
   VITE_CONSENT_BASE_URL: '/bff/ops/v1',
+  VITE_CONSENT_DEV_HEADERS: '0',
   VITE_CDN_HOST: 'https://cdn.autional.cn',
   VITE_COOKIE_DOMAIN: '.autional.cn',
   VITE_PORTAL_CONFIG: {},

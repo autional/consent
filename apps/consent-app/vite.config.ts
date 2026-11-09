@@ -32,6 +32,10 @@ const proxy = {
   target: process.env.VITE_API_PROXY_URL || 'http://localhost:11080',
   changeOrigin: true,
 };
+const consentProxy = {
+  target: process.env.VITE_CONSENT_PROXY_URL || 'http://localhost:11030',
+  changeOrigin: true,
+};
 
 export default defineConfig({
   plugins: [
@@ -78,11 +82,11 @@ export default defineConfig({
   },
   server: {
     port: 13113,
-    proxy: { '/bff': proxy, '/oauth': proxy, '/api/v1': proxy },
+    proxy: { '/bff': proxy, '/oauth': proxy, '/api/v1': consentProxy },
   },
   preview: {
     port: 13113,
-    proxy: { '/bff': proxy, '/oauth': proxy, '/api/v1': proxy },
+    proxy: { '/bff': proxy, '/oauth': proxy, '/api/v1': consentProxy },
   },
   build: { outDir: 'dist', sourcemap: false },
 });

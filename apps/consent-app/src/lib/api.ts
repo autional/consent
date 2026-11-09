@@ -14,15 +14,19 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 
   const cfg = getConfig();
   const base = cfg.VITE_CONSENT_BASE_URL || '/bff/ops/v1';
-  const res = await fetch(`${base}${path}`, {
-    ...init,
-    headers: {
-      Accept: 'application/json',
-      ...(init.body ? { 'Content-Type': 'application/json' } : {}),
-      Authorization: `Bearer ${token}`,
-      ...(init.headers ?? {}),
-    },
-  });
+  const headers: Record<string, string> = {
+    Accept: 'application/json',
+    ...(init.body ? { 'Content-Type': 'application/json' } : {}),
+    Authorization: `Bearer ${token}`,
+    ...((init.headers as Record<string, string> | undefined) ?? {}),
+  };
+  // 本地 dev：service-consent 直接信任网关注入头；生产由网关注入，前端不伪造。
+  if (import.meta.env.DEV && cfg.VITE_CONSENT_DEV_HEADERS === '1') {
+    headers['X-User-ID'] = 'dev-user';
+    headers['X-Tenant-ID'] = 'tenant-a';
+    headers['X-User-Roles'] = 'super_admin';
+  }
+  const res = await fetch(`${base}${path}`, { ...init, headers });
 
   if (res.status === 401) throw new AuthRequiredError();
   if (!res.ok) {
