@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 512 512" role="img" aria-label="Autional Consent">
+  <rect width="512" height="512" rx="112" fill="#0b1020"/>
+  <path d="M256 84l132 52v124c0 86-56 148-132 176-76-28-132-90-132-176V136l132-52z" fill="#5b8cff"/>
+  <path d="M256 130l86 34v96c0 58-36 101-86 122-50-21-86-64-86-122v-96l86-34z" fill="#0b1020"/>
+  <path d="M208 258l34 34 66-74" fill="none" stroke="#7ef0c0" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

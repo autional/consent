@@ -1,0 +1,21 @@
+{
+  "name": "@autional/consent",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm --filter @autional/consent-app dev",
+    "build": "pnpm --filter @autional/consent-app... build",
+    "preview": "pnpm --filter @autional/consent-app preview",
+    "typecheck": "pnpm --filter @autional/consent-app typecheck",
+    "test": "pnpm --filter @autional/consent-app test"
+  },
+  "packageManager": "pnpm@10.28.2",
+  "engines": {
+    "node": "24.x"
+  },
+  "devDependencies": {
+    "@vercel/config": "^0.7.2",
+    "typescript": "5.8.3"
+  }
+}
