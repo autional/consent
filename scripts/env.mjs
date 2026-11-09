@@ -57,7 +57,10 @@ export function readBuildEnv(env = process.env) {
   const apiBase = apiMode === 'direct' ? `${apiOrigin}/bff` : '/bff';
   const oauthBase = apiMode === 'direct' ? apiOrigin : '';
   const authBase = `https://auth.autional.${region}`;
-  const consentBase = (env.VITE_CONSENT_BASE_URL || '/bff/ops/v1').replace(/\/+$/, '');
+  const prodBuild =
+    env.VERCEL_ENV === 'production' || env.AUTIONAL_STRICT_ENV === '1' || env.NODE_ENV === 'production';
+  const defaultConsentBase = prodBuild ? '/bff/consent/api/v1/ops' : '/bff/ops/v1';
+  const consentBase = (env.VITE_CONSENT_BASE_URL || defaultConsentBase).replace(/\/+$/, '');
   const consentDevHeaders = env.VITE_CONSENT_DEV_HEADERS === '1';
 
   return {

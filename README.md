@@ -30,7 +30,7 @@ pnpm dev
 
 演示数据只有 3 条（R1/R2/R3），决策只改内存状态；重启 mock 即重置。
 
-正式后端骨架：`shared/service-consent`（`go run ./cmd/server`；3 表 + 3 端点 + 审计 fail-closed）。网关路由/配置中心待接，当前 PWA 默认仍走 mock。
+正式后端：`shared/service-consent`（3 表 + 3 端点 + 审计 fail-closed）。生产构建默认走 `/bff/consent/api/v1/ops`；本地 dev 默认仍走 mock，联调真实后端按下方 `VITE_CONSENT_BASE_URL=/api/v1/ops` 设置。
 
 ### 本地联调真实 service-consent
 
