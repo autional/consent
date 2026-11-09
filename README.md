@@ -47,8 +47,9 @@ pnpm test
 - Vercel：两个项目均已创建并部署（`cn-consent` / `consent`），Production READY。
 - `.com`：GoDaddy 已加 CNAME `consent -> 4f90496b90f22370.vercel-dns-017.com.`；证书已签发，`https://consent.autional.com` 返回 200（本机 DNS 可能需刷新）。
 - `.cn`：待 DNSPod 添加 CNAME `consent -> 181a2b43c72b9f9d.vercel-dns-017.com.`（TTL 600）；未添加前无证书。
-- OAuth：`VITE_OAUTH_CLIENT_ID` 当前是占位 `client-pending-consent`；注册 consent 独立 client 后替换并重部署。
-- API：两区 `FRONTEND_API_MODE=proxy`；若改 `direct`，需把 `consent.autional.cn/.com` 加进 `oauth_clients.cors_origins`。
+- OAuth：独立 client `client-9R0t08yqe4gF` 已创建（public；redirect `.cn/.com` + localhost；`cors_origins` 两域）。
+- Vercel env 已写入 `VITE_OAUTH_CLIENT_ID=client-9R0t08yqe4gF`，但 2026-11-09 当日部署额度耗尽（100/天），**需在 2026-11-10 15:42 CST 后重部署**才生效；当前线上仍是占位 `client-pending-consent`。
+- API：两区 `FRONTEND_API_MODE=proxy`；若改 `direct`，CORS 已在 client 上登记两域。
 
 ## OAuth client
 
