@@ -49,6 +49,7 @@ pnpm test
 - `.cn`：待 DNSPod 添加 CNAME `consent -> 181a2b43c72b9f9d.vercel-dns-017.com.`（TTL 600）；未添加前无证书。
 - OAuth：独立 client `client-9R0t08yqe4gF` 已创建（public；redirect `.cn/.com` + localhost；`cors_origins` 两域）。
 - Vercel env 已写入 `VITE_OAUTH_CLIENT_ID=client-9R0t08yqe4gF`，但 2026-11-09 当日部署额度耗尽（100/天），**需在 2026-11-10 15:42 CST 后重部署**才生效；当前线上仍是占位 `client-pending-consent`。
+- Git 自动部署已启用（`createDeployments=enabled`）；额度恢复后 push `main` 会同时触发 `cn-consent` / `consent`。
 - API：两区 `FRONTEND_API_MODE=proxy`；若改 `direct`，CORS 已在 client 上登记两域。
 
 ## OAuth client
