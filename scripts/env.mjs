@@ -57,6 +57,7 @@ export function readBuildEnv(env = process.env) {
   const apiBase = apiMode === 'direct' ? `${apiOrigin}/bff` : '/bff';
   const oauthBase = apiMode === 'direct' ? apiOrigin : '';
   const authBase = `https://auth.autional.${region}`;
+  const consentBase = (env.VITE_CONSENT_BASE_URL || '/bff/ops/v1').replace(/\/+$/, '');
 
   return {
     region,
@@ -72,5 +73,6 @@ export function readBuildEnv(env = process.env) {
     apiBase,
     oauthBase,
     authBase,
+    consentBase,
   };
 }

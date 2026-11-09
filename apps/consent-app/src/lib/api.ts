@@ -13,7 +13,8 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   if (!token) throw new AuthRequiredError();
 
   const cfg = getConfig();
-  const res = await fetch(`${cfg.VITE_API_BASE_URL}${path}`, {
+  const base = cfg.VITE_CONSENT_BASE_URL || '/bff/ops/v1';
+  const res = await fetch(`${base}${path}`, {
     ...init,
     headers: {
       Accept: 'application/json',
