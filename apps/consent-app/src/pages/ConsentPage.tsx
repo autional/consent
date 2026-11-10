@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
-import { AuthRequiredError, decide, getConsent } from '../lib/api';
+import { AuthRequiredError, cancelConsent, decide, getConsent } from '../lib/api';
 import { beginLogin, getToken } from '../lib/auth';
 import {
   formatRemaining,
@@ -16,7 +16,7 @@ export default function ConsentPage() {
   const [item, setItem] = useState<ConsentRequest | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [submitting, setSubmitting] = useState<'approved' | 'rejected' | ''>('');
+  const [submitting, setSubmitting] = useState<'approved' | 'rejected' | 'canceled' | ''>('');
 
   useEffect(() => {
     if (!getToken()) {
@@ -50,6 +50,19 @@ export default function ConsentPage() {
     setError('');
     try {
       await decide(id, decision);
+      navigate('/', { replace: true });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setSubmitting('');
+    }
+  }
+
+  async function onCancel() {
+    setSubmitting('canceled');
+    setError('');
+    try {
+      await cancelConsent(id, 'PWA cancel');
       navigate('/', { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -95,6 +108,13 @@ export default function ConsentPage() {
             onClick={() => onDecide('rejected')}
           >
             {submitting === 'rejected' ? '提交中…' : '拒绝'}
+          </button>
+          <button
+            className="btn btn-ghost"
+            disabled={Boolean(submitting)}
+            onClick={onCancel}
+          >
+            {submitting === 'canceled' ? '撤销中…' : '撤销'}
           </button>
           <button
             className="btn btn-primary"

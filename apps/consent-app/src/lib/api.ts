@@ -62,3 +62,11 @@ export async function decide(id: string, decision: 'approved' | 'rejected'): Pro
   });
   return unwrap<ConsentRequest>(body);
 }
+
+export async function cancelConsent(id: string, reason?: string): Promise<ConsentRequest> {
+  const body = await request<unknown>(`/consents/${encodeURIComponent(id)}/cancel`, {
+    method: 'POST',
+    body: JSON.stringify({ reason: reason ?? '' }),
+  });
+  return unwrap<ConsentRequest>(body);
+}
