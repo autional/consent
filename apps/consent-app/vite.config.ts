@@ -19,7 +19,7 @@ function inlineEnvPlugin(): Plugin {
       }
       let envJs: string;
       try {
-        envJs = readFileSync(path.resolve(__dirname, 'public/env.js'), 'utf8').trim();
+        envJs = readFileSync(path.resolve(process.cwd(), 'public/env.js'), 'utf8').trim();
       } catch {
         throw new Error('[consent] 缺少 public/env.js，请先运行 scripts/gen-env.mjs');
       }
