@@ -43,11 +43,16 @@ function unwrap<T>(body: unknown): T {
   return body as T;
 }
 
-export async function listPending(): Promise<ConsentRequest[]> {
-  const body = await request<unknown>('/consents?status=pending');
+export async function listConsents(status?: string): Promise<ConsentRequest[]> {
+  const q = status ? `?status=${encodeURIComponent(status)}` : '';
+  const body = await request<unknown>(`/consents${q}`);
   const data = unwrap<ConsentRequest[] | { items?: ConsentRequest[] }>(body);
   if (Array.isArray(data)) return data;
   return data.items ?? [];
+}
+
+export async function listPending(): Promise<ConsentRequest[]> {
+  return listConsents('pending');
 }
 
 export async function getConsent(id: string): Promise<ConsentRequest> {
@@ -76,10 +81,10 @@ export async function registerDevice(name: string): Promise<ConsentDevice> {
   return unwrap<ConsentDevice>(body);
 }
 
-export async function decide(id: string, decision: 'approved' | 'rejected', deviceId?: string): Promise<ConsentRequest> {
+export async function decide(id: string, decision: 'approved' | 'rejected', deviceId?: string, reason?: string): Promise<ConsentRequest> {
   const body = await request<unknown>(`/consents/${encodeURIComponent(id)}/decision`, {
     method: 'POST',
-    body: JSON.stringify({ decision, ...(deviceId ? { device_id: deviceId } : {}) }),
+    body: JSON.stringify({ decision, ...(deviceId ? { device_id: deviceId } : {}), ...(reason ? { reason } : {}) }),
   });
   return unwrap<ConsentRequest>(body);
 }

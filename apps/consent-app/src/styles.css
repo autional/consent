@@ -84,6 +84,8 @@ h2 { font-size: 17px; margin: 0 0 8px; }
 .kv dt { color: var(--muted); }
 .kv dd { margin: 0; overflow-wrap: anywhere; }
 .actions { display: flex; gap: 10px; justify-content: flex-end; margin: 18px 0 10px; }
+.field { display: grid; gap: 6px; margin-top: 14px; }
+.reason-input { width: 100%; box-sizing: border-box; resize: vertical; border: 1px solid var(--border); background: var(--surface-2); color: var(--text); border-radius: 10px; padding: 9px 12px; font: inherit; }
 
 .btn {
   appearance: none; border: 1px solid var(--border); background: var(--surface-2);

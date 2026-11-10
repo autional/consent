@@ -3,6 +3,7 @@ import { beginLogin, getToken, isDemo, logout } from './lib/auth';
 import PendingPage from './pages/PendingPage';
 import ConsentPage from './pages/ConsentPage';
 import CallbackPage from './pages/CallbackPage';
+import HistoryPage from './pages/HistoryPage';
 
 function Header() {
   const location = useLocation();
@@ -26,6 +27,7 @@ function Header() {
         {loggedIn ? (
           <>
             {isDemo() && <span className="demo-badge">演示</span>}
+            <Link className="btn btn-ghost" to="/history">历史</Link>
             <button className="btn btn-ghost" onClick={logout}>退出</button>
           </>
         ) : (
@@ -44,6 +46,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<PendingPage />} />
           <Route path="/c/:id" element={<ConsentPage />} />
+          <Route path="/history" element={<HistoryPage />} />
           <Route path="/oauth/callback" element={<CallbackPage />} />
           <Route
             path="*"

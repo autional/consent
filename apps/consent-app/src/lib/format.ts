@@ -11,6 +11,8 @@ export interface ConsentRequest {
   requester_id?: string;
   expires_at?: string;
   created_at?: string;
+  decided_at?: string;
+  decided_by?: string;
   params_hash?: string;
 }
 

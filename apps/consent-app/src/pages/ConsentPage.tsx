@@ -18,6 +18,7 @@ export default function ConsentPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState<'approved' | 'rejected' | 'canceled' | ''>('');
+  const [reason, setReason] = useState('');
 
   useEffect(() => {
     if (!getToken()) {
@@ -51,7 +52,7 @@ export default function ConsentPage() {
     setError('');
     try {
       const deviceId = getDeviceId() || (await ensureDevice().catch(() => ''));
-      await decide(id, decision, deviceId || undefined);
+      await decide(id, decision, deviceId || undefined, reason.trim() || undefined);
       navigate('/', { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -64,7 +65,7 @@ export default function ConsentPage() {
     setSubmitting('canceled');
     setError('');
     try {
-      await cancelConsent(id, 'PWA cancel');
+      await cancelConsent(id, reason.trim() || 'PWA cancel');
       navigate('/', { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -103,7 +104,18 @@ export default function ConsentPage() {
       </dl>
 
       {pending ? (
-        <div className="actions">
+        <>
+          <label className="field">
+            <span className="muted">备注（可选）</span>
+            <textarea
+              className="reason-input"
+              rows={2}
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="填写批准/拒绝/撤销原因"
+            />
+          </label>
+          <div className="actions">
           <button
             className="btn btn-danger"
             disabled={Boolean(submitting)}
@@ -125,7 +137,8 @@ export default function ConsentPage() {
           >
             {submitting === 'approved' ? '提交中…' : '允许'}
           </button>
-        </div>
+          </div>
+        </>
       ) : (
         <p className="muted">该请求已处理（{statusLabel(item.status)}）。</p>
       )}
