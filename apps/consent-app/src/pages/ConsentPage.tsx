@@ -51,7 +51,7 @@ export default function ConsentPage() {
     setSubmitting(decision);
     setError('');
     try {
-      const deviceId = getDeviceId() || (await ensureDevice().catch(() => ''));
+      const deviceId = await ensureDevice().catch(() => getDeviceId());
       await decide(id, decision, deviceId || undefined, reason.trim() || undefined);
       navigate('/', { replace: true });
     } catch (err) {
