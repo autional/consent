@@ -1,5 +1,10 @@
 # consent · 高风险操作确认 PWA
 
+> 🚨 **2026-11-10 托管变更**：`*.autional.cn` **已迁出 Vercel** —— 改为 mf01 构建（node:24-alpine + 钉版 pnpm）→ 香港自建托管。
+> `.cn` 的构建 env 由 workspace `shared/infra-ops/sites/sites.manifest.json` 注入；push 后由 mf01 cron（约 10 分钟）构建发布，不经 Vercel。
+> `*.autional.com` 仍在 Vercel —— 本文中涉及 Vercel 的构建/部署描述对 `.com` 仍然成立。
+> 现行口径：workspace `docs/AUTIONAL-CN-SITES-SELF-HOST.md`。
+
 `consent.autional.cn` / `consent.autional.com` 的唯一源站（双区单源，照 authenticator 的目录/发布模式）。
 
 ## 形态
@@ -7,7 +12,7 @@
 - 单页 PWA（Vite + React + TypeScript）。
 - 登录：平台 OIDC 授权码 + PKCE（`auth.autional.{cn,com}`）。
 - 页面：`/` 待确认列表、`/c/:id` 确认详情、`/oauth/callback` 登录回调。
-- API：`/bff/ops/v1/consents*`（Vercel rewrite → `API_ORIGIN`）。
+- API：`/bff/ops/v1/consents*`（`.com` 由 Vercel rewrite、`.cn` 由香港 nginx 反代 → `API_ORIGIN`）。
 - 不持有任何数据库/服务凭据；只展示与提交确认决定。
 
 ## 本地
@@ -70,10 +75,12 @@ pnpm dev
 | `CDN_HOST` | `https://cdn.autional.cn` / `.com` |
 | `DEFAULT_LANG` / `FALLBACK_LANG` | `zh` / `en` |
 
-## Vercel
+## Vercel（`.com`）/ mf01（`.cn`）
+
+> 2026-11-10：`.cn` 已迁出 Vercel，本节关于项目/env/部署的描述仅对 `.com` 成立；`.cn` 见 workspace `docs/AUTIONAL-CN-SITES-SELF-HOST.md`。
 
 - `.cn` 项目 `cn-consent`（`prj_6Ib6WYGRtuWOvQBhKtj3ozPJOzLW`），`.com` 项目 `consent`（`prj_8QPYe7AUcuKh9poFaynEH6b0tJf8`）；同一仓、同一 `vercel.ts`，只换环境变量。
-- 推 `main` 自动部署；CLI 重投按 `shared/entry-proxies/README.md`。
+- 推 `main`：`.com` 由 Vercel 自动部署；`.cn` 由 mf01 cron 构建发布（约 10 分钟，不经 Vercel）。CLI 重投（仅 `.com`）按 `shared/entry-proxies/README.md`。
 - `vercel.ts` 由 CLI 本地编译：命令环境与 Vercel 项目 env 都要有 `API_ORIGIN`。
 - Hobby 下成员仓必须 public（ADR-017）。
 
@@ -86,7 +93,7 @@ pnpm dev
 - OAuth：独立 client `client-9R0t08yqe4gF`（public；redirect `.cn/.com` + localhost；`cors_origins` 两域）；两区 authorize 探针均 302 → 各自 `/oauth/callback?error=login_required`。
 - 两区 `env.js` 均已含 `VITE_OAUTH_CLIENT_ID=client-9R0t08yqe4gF`。
 - `/`、`/env.js`、`/manifest.webmanifest`、`/sw.js`、`/oauth/callback`、`/c/<id>`（Accept html）均 200；缺失静态资源 404。
-- 两区 Git 自动部署均可用（push `main` → 自动构建）；2026-11-09 手动 API 部署额度耗尽（100/天），不影响 Git 部署。
+- 两区自动构建均可用：`.com` = Vercel Git 部署；`.cn` = mf01 cron（2026-11-10 起迁出 Vercel）。2026-11-09 Vercel 手动 API 部署额度耗尽（100/天）只影响 `.com` 的手动重投。
 - API：两区 `FRONTEND_API_MODE=proxy`；若改 `direct`，CORS 已在 client 上登记两域。
 
 ## OAuth client
