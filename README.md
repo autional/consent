@@ -88,6 +88,7 @@ pnpm dev
 
 - GitHub：`https://github.com/autional/consent`，`main` 已推送。
 - Vercel：两个项目均已创建并部署（`cn-consent` / `consent`），Production READY。
+- ⚠️ `cn-consent` 的 **Ignored Build Step** 若被设为 `true`，Vercel 会直接取消构建（日志：`deployment was canceled because the Ignored Build Step command returned exit code 0`）。已清空；再遇到 CN CANCELED 先检查该设置。
 - `.com`：GoDaddy CNAME `consent -> 4f90496b90f22370.vercel-dns-017.com.`；证书已签发，`https://consent.autional.com` 200。
 - `.cn`：DNSPod CNAME `consent -> 181a2b43c72b9f9d.vercel-dns-017.com.` 已配置；Vercel 证书已签发（CN=consent.autional.cn）；`https://consent.autional.cn` 200。
 - OAuth：独立 client `client-9R0t08yqe4gF`（public；redirect `.cn/.com` + localhost；`cors_origins` 两域）；两区 authorize 探针均 302 → 各自 `/oauth/callback?error=login_required`。
