@@ -1,4 +1,4 @@
-import { registerDevice } from './api';
+import { listDevices, registerDevice } from './api';
 import { isDemo } from './auth';
 
 const DEVICE_KEY = 'consent.device_id';
@@ -11,27 +11,54 @@ export function getDeviceId(): string {
   }
 }
 
-function deviceName(): string {
-  const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
-  const name = `PWA ${ua}`.trim();
-  return name.slice(0, 128);
+export function clearDeviceId(): void {
+  try {
+    localStorage.removeItem(DEVICE_KEY);
+  } catch {
+    // ignore storage-disabled environments
+  }
 }
+
+function deviceName(): string {
+  const platform = typeof navigator !== 'undefined' ? navigator.platform : '';
+  return `PWA ${platform || 'web'}`.slice(0, 128);
+}
+
+let pending: Promise<string> | null = null;
 
 /**
  * Best-effort device registration. The consent service binds the device to the
  * authenticated tenant/user and rejects revoked devices at decision time.
- * Failures must not block the pending list; decisions without a device still
- * work for policies that do not require one.
+ *
+ * The cached id is revalidated against the current user's device list so that
+ * switching accounts/tenants does not reuse another user's device id. Failures
+ * must not block the pending list; decisions without a device still work for
+ * policies that do not require one.
  */
 export async function ensureDevice(): Promise<string> {
   if (isDemo()) return '';
-  const existing = getDeviceId();
-  if (existing) return existing;
-  const device = await registerDevice(deviceName());
-  try {
-    localStorage.setItem(DEVICE_KEY, device.id);
-  } catch {
-    // Storage can be disabled; the in-memory return still lets this decision pass.
-  }
-  return device.id;
+  if (pending) return pending;
+  pending = (async () => {
+    const existing = getDeviceId();
+    if (existing) {
+      try {
+        const devices = await listDevices();
+        if (devices.some((d) => d.id === existing && !d.revoked_at)) return existing;
+      } catch {
+        // Network/verifier issues: keep the cached id rather than blocking the UI.
+        return existing;
+      }
+      clearDeviceId();
+    }
+    const device = await registerDevice(deviceName());
+    try {
+      localStorage.setItem(DEVICE_KEY, device.id);
+    } catch {
+      // Storage can be disabled; the in-memory return still lets this decision pass.
+    }
+    return device.id;
+  })().finally(() => {
+    pending = null;
+  });
+  return pending;
 }

@@ -62,6 +62,11 @@ export function isDemo(): boolean {
 export function logout(): void {
   clearToken();
   disableDemo();
+  try {
+    localStorage.removeItem('consent.device_id');
+  } catch {
+    // ignore storage-disabled environments
+  }
   window.location.assign('/');
 }
 
