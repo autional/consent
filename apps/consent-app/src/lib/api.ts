@@ -55,10 +55,31 @@ export async function getConsent(id: string): Promise<ConsentRequest> {
   return unwrap<ConsentRequest>(body);
 }
 
-export async function decide(id: string, decision: 'approved' | 'rejected'): Promise<ConsentRequest> {
+export interface ConsentDevice {
+  id: string;
+  name: string;
+  revoked_at?: string | null;
+}
+
+export async function listDevices(): Promise<ConsentDevice[]> {
+  const body = await request<unknown>('/devices');
+  const data = unwrap<{ items?: ConsentDevice[] } | ConsentDevice[]>(body);
+  if (Array.isArray(data)) return data;
+  return data.items ?? [];
+}
+
+export async function registerDevice(name: string): Promise<ConsentDevice> {
+  const body = await request<unknown>('/devices', {
+    method: 'POST',
+    body: JSON.stringify({ name }),
+  });
+  return unwrap<ConsentDevice>(body);
+}
+
+export async function decide(id: string, decision: 'approved' | 'rejected', deviceId?: string): Promise<ConsentRequest> {
   const body = await request<unknown>(`/consents/${encodeURIComponent(id)}/decision`, {
     method: 'POST',
-    body: JSON.stringify({ decision }),
+    body: JSON.stringify({ decision, ...(deviceId ? { device_id: deviceId } : {}) }),
   });
   return unwrap<ConsentRequest>(body);
 }

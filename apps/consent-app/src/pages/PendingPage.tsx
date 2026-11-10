@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { AuthRequiredError, listPending } from '../lib/api';
+import { ensureDevice } from '../lib/device';
 import { beginLogin, demoAvailable, enableDemo, getToken } from '../lib/auth';
 import { formatRemaining, riskLabel, statusLabel, type ConsentRequest } from '../lib/format';
 
@@ -15,6 +16,7 @@ export default function PendingPage() {
     let cancelled = false;
     setLoading(true);
     setError('');
+    ensureDevice().catch(() => undefined);
     listPending()
       .then((data) => {
         if (!cancelled) setItems(data);

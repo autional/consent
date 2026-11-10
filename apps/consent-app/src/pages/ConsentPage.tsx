@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { AuthRequiredError, cancelConsent, decide, getConsent } from '../lib/api';
 import { beginLogin, getToken } from '../lib/auth';
+import { ensureDevice, getDeviceId } from '../lib/device';
 import {
   formatRemaining,
   riskLabel,
@@ -49,7 +50,8 @@ export default function ConsentPage() {
     setSubmitting(decision);
     setError('');
     try {
-      await decide(id, decision);
+      const deviceId = getDeviceId() || (await ensureDevice().catch(() => ''));
+      await decide(id, decision, deviceId || undefined);
       navigate('/', { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
