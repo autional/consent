@@ -89,6 +89,18 @@ export async function decide(id: string, decision: 'approved' | 'rejected', devi
   return unwrap<ConsentRequest>(body);
 }
 
+/**
+ * One-time ticket for the SSE channel. Browsers cannot set an Authorization
+ * header on EventSource, so the token stays here and only the short-lived
+ * ticket travels in the URL.
+ */
+export async function createStreamTicket(): Promise<string> {
+  const body = await request<unknown>('/consents/stream-ticket', { method: 'POST' });
+  const data = unwrap<{ ticket?: string }>(body);
+  if (!data?.ticket) throw new Error('stream ticket missing');
+  return data.ticket;
+}
+
 export async function cancelConsent(id: string, reason?: string): Promise<ConsentRequest> {
   const body = await request<unknown>(`/consents/${encodeURIComponent(id)}/cancel`, {
     method: 'POST',

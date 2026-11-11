@@ -1,41 +1,81 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { AuthRequiredError, listPending } from '../lib/api';
 import { ensureDevice } from '../lib/device';
-import { beginLogin, demoAvailable, enableDemo, getToken } from '../lib/auth';
+import { beginLogin, clearToken, demoAvailable, enableDemo, getToken } from '../lib/auth';
 import { formatRemaining, riskLabel, statusLabel, type ConsentRequest } from '../lib/format';
+import { openConsentStream, type StreamStatus } from '../lib/stream';
+
+const STATUS_TEXT: Record<StreamStatus, string> = {
+  connecting: '连接中',
+  open: '实时',
+  error: '重连中',
+  closed: '已断开',
+};
 
 export default function PendingPage() {
   const [items, setItems] = useState<ConsentRequest[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const loggedIn = Boolean(getToken());
+  const [authLost, setAuthLost] = useState(false);
+  const [stream, setStream] = useState<StreamStatus>('connecting');
+  const [loggedIn, setLoggedIn] = useState(() => Boolean(getToken()));
+  const inflight = useRef(false);
+
+  const load = useCallback(async () => {
+    if (!getToken()) return;
+    if (inflight.current) return;
+    inflight.current = true;
+    setLoading(true);
+    try {
+      const data = await listPending();
+      setItems(data);
+      setError('');
+      setAuthLost(false);
+    } catch (err) {
+      if (err instanceof AuthRequiredError) {
+        // The token is gone or expired: drop it so the header shows "登录"
+        // and give the user a button instead of a dead end.
+        clearToken();
+        setLoggedIn(false);
+        setAuthLost(true);
+        setError('登录已过期，请重新登录。');
+      } else {
+        setError(err instanceof Error ? err.message : String(err));
+      }
+    } finally {
+      inflight.current = false;
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     if (!loggedIn) return;
-    let cancelled = false;
-    setLoading(true);
-    setError('');
+    void load();
     ensureDevice().catch(() => undefined);
-    listPending()
-      .then((data) => {
-        if (!cancelled) setItems(data);
-      })
-      .catch((err) => {
-        if (cancelled) return;
-        if (err instanceof AuthRequiredError) {
-          setError('登录已过期，请重新登录。');
-        } else {
-          setError(err instanceof Error ? err.message : String(err));
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
+  }, [loggedIn, load]);
+
+  useEffect(() => {
+    if (!loggedIn) return;
+    const handle = openConsentStream({
+      // Events are only change signals: always refetch.
+      onChange: () => void load(),
+      onStatus: setStream,
+    });
+    const onVisibility = () => {
+      if (document.hidden) {
+        handle.pause();
+      } else {
+        handle.resume();
+        void load();
+      }
     };
-  }, [loggedIn]);
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility);
+      handle.close();
+    };
+  }, [loggedIn, load]);
 
   if (!loggedIn) {
     return (
@@ -43,14 +83,16 @@ export default function PendingPage() {
         <div className="hero-badge">Consent</div>
         <h1>Agent 要执行高风险动作时，这里点一下</h1>
         <p className="muted">
-          用平台账号登录后，查看待确认请求。低风险自动执行，敏感动作需要你批准。
+          {authLost
+            ? '登录已过期。重新登录后继续处理待确认请求。'
+            : '用平台账号登录后，查看待确认请求。低风险自动执行，敏感动作需要你批准。'}
         </p>
         <div className="hero-actions">
           <button
             className="btn btn-primary"
             onClick={() => beginLogin('/').catch((e) => setError(String(e)))}
           >
-            登录并查看
+            {authLost ? '重新登录' : '登录并查看'}
           </button>
           {demoAvailable() && (
             <button className="btn btn-ghost" onClick={enableDemo}>
@@ -68,12 +110,15 @@ export default function PendingPage() {
       <div className="section-head">
         <div>
           <h1>待确认</h1>
-          <p className="muted">按风险与到期时间排序；批准后参数不可改。</p>
+          <p className="muted">
+            按风险与到期时间排序；批准后参数不可改。
+            <span className={`stream-badge stream-${stream}`}>{STATUS_TEXT[stream]}</span>
+          </p>
         </div>
-        <button className="btn btn-ghost" onClick={() => window.location.reload()}>刷新</button>
+        <button className="btn btn-ghost" onClick={() => void load()}>刷新</button>
       </div>
 
-      {loading && <div className="card muted">加载中…</div>}
+      {loading && items.length === 0 && <div className="card muted">加载中…</div>}
       {error && <div className="card error">{error}</div>}
       {!loading && !error && items.length === 0 && (
         <div className="card empty">

@@ -11,6 +11,9 @@
 
 - 单页 PWA（Vite + React + TypeScript）。
 - 登录：平台 OIDC 授权码 + PKCE（`auth.autional.{cn,com}`）。
+
+- 实时更新：登录后先 `POST .../consents/stream-ticket` 换一次性票据，再 `EventSource(.../consents/stream?ticket=…)` 建流；事件只当"有变化"信号，收到即重拉列表；切到后台暂停、回到前台重连并重拉；断线指数退避（1s→30s）。状态徽标在标题旁（实时/重连中/已断开）。
+- 登录过期：接口 401 会清 token 并显示「重新登录」，不再出现"提示过期但无出口"。
 - 页面：`/` 待确认列表、`/c/:id` 确认详情、`/oauth/callback` 登录回调。
 - API：`/bff/ops/v1/consents*`（`.com` 由 Vercel rewrite、`.cn` 由香港 nginx 反代 → `API_ORIGIN`）。
 - 不持有任何数据库/服务凭据；只展示与提交确认决定。

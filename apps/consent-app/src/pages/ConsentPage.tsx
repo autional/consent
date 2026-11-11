@@ -22,6 +22,9 @@ export default function ConsentPage() {
 
   useEffect(() => {
     if (!getToken()) {
+      // Stop the spinner: if beginLogin fails we must show the error instead
+      // of waiting forever on "加载中…".
+      setLoading(false);
       beginLogin(`/c/${id}`).catch((e) => setError(String(e)));
       return;
     }
@@ -48,6 +51,11 @@ export default function ConsentPage() {
   }, [id]);
 
   async function onDecide(decision: 'approved' | 'rejected') {
+    if (decision === 'rejected' && !reason.trim()) {
+      // A rejection without a reason is useless in the audit trail.
+      setError('拒绝需要填写理由（会写入审计）。');
+      return;
+    }
     setSubmitting(decision);
     setError('');
     try {
@@ -99,7 +107,22 @@ export default function ConsentPage() {
         <div><dt>目标</dt><dd>{item.target || '—'}</dd></div>
         <div><dt>申请人</dt><dd>{item.requester_type || 'agent'} / {item.requester_id || '—'}</dd></div>
         <div><dt>理由</dt><dd>{item.reason || '—'}</dd></div>
-        <div><dt>参数哈希</dt><dd className="mono">{shortHash(item.params_hash)}</dd></div>
+        <div>
+          <dt>参数哈希</dt>
+          <dd className="mono">
+            {shortHash(item.params_hash)}
+            {item.params_hash && (
+              <button
+                className="btn btn-ghost btn-inline"
+                onClick={() => {
+                  navigator.clipboard?.writeText(item.params_hash ?? '').catch(() => undefined);
+                }}
+              >
+                复制完整哈希
+              </button>
+            )}
+          </dd>
+        </div>
         <div><dt>到期</dt><dd>{formatRemaining(item.expires_at)}</dd></div>
       </dl>
 
