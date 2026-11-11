@@ -1,4 +1,5 @@
 import { getConfig, redirectUri } from './config';
+import { parseErrorMessage } from './errors';
 
 const TOKEN_KEY = 'consent.access_token';
 const VERIFIER_KEY = 'consent.pkce.verifier';
@@ -130,7 +131,7 @@ export async function completeLogin(search: string): Promise<string> {
 
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`换取令牌失败：${res.status} ${text.slice(0, 200)}`);
+    throw new Error(`换取令牌失败：${parseErrorMessage(text, res.status)}`);
   }
 
   const data = (await res.json()) as { access_token?: string };

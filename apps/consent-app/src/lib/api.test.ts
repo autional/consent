@@ -16,6 +16,32 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+function mockFetchStatus(body: unknown, status: number) {
+  const fn = vi.fn(async () => new Response(JSON.stringify(body), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  }));
+  vi.stubGlobal('fetch', fn);
+  return fn;
+}
+
+describe('consent API error envelope', () => {
+  it('surfaces detail from the platform envelope', async () => {
+    mockFetchStatus({ code: 'invalid_policy', error: 'invalid_policy', detail: '策略要求二次确认' }, 400);
+    await expect(listPending()).rejects.toThrow('策略要求二次确认');
+  });
+
+  it('falls back to error when detail/title are absent', async () => {
+    mockFetchStatus({ error: 'invalid internal key' }, 400);
+    await expect(listPending()).rejects.toThrow('invalid internal key');
+  });
+
+  it('keeps plain-text errors readable', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response('bad gateway', { status: 502 })));
+    await expect(listPending()).rejects.toThrow('502');
+  });
+});
+
 describe('consent API paths', () => {
   it('uses base + /consents for pending', async () => {
     const f = mockFetch();

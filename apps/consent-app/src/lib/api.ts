@@ -1,6 +1,7 @@
 import { getConfig } from './config';
 import { getToken } from './auth';
 import type { ConsentRequest } from './format';
+import { parseErrorMessage } from './errors';
 
 export class AuthRequiredError extends Error {
   constructor() {
@@ -31,7 +32,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   if (res.status === 401) throw new AuthRequiredError();
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`${res.status} ${text.slice(0, 300)}`);
+    throw new Error(parseErrorMessage(text, res.status));
   }
   return (await res.json()) as T;
 }
