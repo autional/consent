@@ -14,6 +14,10 @@ export interface ConsentRequest {
   decided_at?: string;
   decided_by?: string;
   params_hash?: string;
+  /** Floor set by the caller; the effective factor may be higher (policy). */
+  required_factor?: string;
+  external_action_id?: string;
+  summary?: string;
 }
 
 export function riskLabel(risk: Risk | string): string {

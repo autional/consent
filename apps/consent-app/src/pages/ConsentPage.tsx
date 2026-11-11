@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
-import { AuthRequiredError, cancelConsent, decide, getConsent } from '../lib/api';
+import { AuthRequiredError, cancelConsent, decide, getConsent, issueFactorChallenge } from '../lib/api';
 import { beginLogin, getToken } from '../lib/auth';
 import { ensureDevice, getDeviceId } from '../lib/device';
 import {
@@ -19,6 +19,11 @@ export default function ConsentPage() {
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState<'approved' | 'rejected' | 'canceled' | ''>('');
   const [reason, setReason] = useState('');
+  const [factor, setFactor] = useState('');
+  const [code, setCode] = useState('');
+  const [codeSent, setCodeSent] = useState('');
+  const [codeError, setCodeError] = useState('');
+  const [sendingCode, setSendingCode] = useState(false);
 
   useEffect(() => {
     if (!getToken()) {
@@ -50,6 +55,21 @@ export default function ConsentPage() {
     };
   }, [id]);
 
+  async function onSendCode() {
+    const next = factor || item?.required_factor || 'sms_otp';
+    setSendingCode(true);
+    setCodeError('');
+    try {
+      const ch = await issueFactorChallenge(id, next);
+      setFactor(ch.factor);
+      setCodeSent(ch.destination || '已发送');
+    } catch (err) {
+      setCodeError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setSendingCode(false);
+    }
+  }
+
   async function onDecide(decision: 'approved' | 'rejected') {
     if (decision === 'rejected' && !reason.trim()) {
       // A rejection without a reason is useless in the audit trail.
@@ -60,7 +80,13 @@ export default function ConsentPage() {
     setError('');
     try {
       const deviceId = await ensureDevice().catch(() => getDeviceId());
-      await decide(id, decision, deviceId || undefined, reason.trim() || undefined);
+      await decide(
+        id,
+        decision,
+        deviceId || undefined,
+        reason.trim() || undefined,
+        factor && code.trim() ? { factor, code: code.trim() } : undefined,
+      );
       navigate('/', { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -138,6 +164,23 @@ export default function ConsentPage() {
               placeholder="填写批准/拒绝/撤销原因"
             />
           </label>
+          <div className="field">
+            <span className="muted">确认码（敏感动作需要）</span>
+            <div className="actions">
+              <input
+                className="reason-input"
+                inputMode="numeric"
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                placeholder="6 位验证码"
+              />
+              <button className="btn btn-ghost" disabled={sendingCode} onClick={onSendCode}>
+                {sendingCode ? '发送中…' : '发送验证码'}
+              </button>
+            </div>
+            {codeSent && <span className="muted">已发送至 {codeSent}</span>}
+            {codeError && <span className="error">{codeError}</span>}
+          </div>
           <div className="actions">
           <button
             className="btn btn-danger"

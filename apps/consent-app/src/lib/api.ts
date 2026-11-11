@@ -81,12 +81,45 @@ export async function registerDevice(name: string): Promise<ConsentDevice> {
   return unwrap<ConsentDevice>(body);
 }
 
-export async function decide(id: string, decision: 'approved' | 'rejected', deviceId?: string, reason?: string): Promise<ConsentRequest> {
+export interface FactorProof {
+  factor: string;
+  code: string;
+}
+
+export async function decide(
+  id: string,
+  decision: 'approved' | 'rejected',
+  deviceId?: string,
+  reason?: string,
+  proof?: FactorProof,
+): Promise<ConsentRequest> {
   const body = await request<unknown>(`/consents/${encodeURIComponent(id)}/decision`, {
     method: 'POST',
-    body: JSON.stringify({ decision, ...(deviceId ? { device_id: deviceId } : {}), ...(reason ? { reason } : {}) }),
+    body: JSON.stringify({
+      decision,
+      ...(deviceId ? { device_id: deviceId } : {}),
+      ...(reason ? { reason } : {}),
+      ...(proof ? { factor: proof.factor, factor_proof: proof.code } : {}),
+    }),
   });
   return unwrap<ConsentRequest>(body);
+}
+
+export interface FactorChallenge {
+  challenge_id: string;
+  factor: string;
+  expires_at: string;
+  destination?: string;
+  max_attempts?: number;
+}
+
+/** Ask the server to send one approval code bound to this request. */
+export async function issueFactorChallenge(id: string, factor: string): Promise<FactorChallenge> {
+  const body = await request<unknown>(`/consents/${encodeURIComponent(id)}/factor-challenge`, {
+    method: 'POST',
+    body: JSON.stringify({ factor }),
+  });
+  return unwrap<FactorChallenge>(body);
 }
 
 /**
