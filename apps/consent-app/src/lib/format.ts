@@ -14,6 +14,7 @@ export interface ConsentRequest {
   decided_at?: string;
   decided_by?: string;
   params_hash?: string;
+  tenant_id?: string;
   /** Floor set by the caller; the effective factor may be higher (policy). */
   required_factor?: string;
   external_action_id?: string;

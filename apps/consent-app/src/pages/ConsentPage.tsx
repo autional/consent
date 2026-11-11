@@ -138,7 +138,9 @@ export default function ConsentPage() {
       <dl className="kv">
         <div><dt>目标</dt><dd>{item.target || '—'}</dd></div>
         <div><dt>申请人</dt><dd>{item.requester_type || 'agent'} / {item.requester_id || '—'}</dd></div>
+        <div><dt>内容摘要</dt><dd>{item.summary || '—'}</dd></div>
         <div><dt>理由</dt><dd>{item.reason || '—'}</dd></div>
+        <div><dt>租户</dt><dd className="mono">{item.tenant_id || '—'}</dd></div>
         <div>
           <dt>参数哈希</dt>
           <dd className="mono">

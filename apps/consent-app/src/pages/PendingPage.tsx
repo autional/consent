@@ -138,7 +138,8 @@ export default function PendingPage() {
               <div className="muted">
                 目标：{item.target || '—'} · 申请人：{item.requester_id || '—'}
               </div>
-              {item.reason && <div className="reason">{item.reason}</div>}
+              {item.summary && <div className="reason">{item.summary}</div>}
+              {!item.summary && item.reason && <div className="reason">{item.reason}</div>}
             </div>
             <div className="item-side">
               <span className="status">{statusLabel(item.status)}</span>
