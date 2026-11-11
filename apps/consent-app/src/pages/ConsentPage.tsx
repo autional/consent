@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router';
 import { AuthRequiredError, cancelConsent, decide, getConsent, issueFactorChallenge } from '../lib/api';
 import { beginLogin, getToken } from '../lib/auth';
 import { ensureDevice, getDeviceId } from '../lib/device';
+import { signDecision } from '../lib/device_key';
 import {
   formatRemaining,
   riskLabel,
@@ -80,12 +81,17 @@ export default function ConsentPage() {
     setError('');
     try {
       const deviceId = await ensureDevice().catch(() => getDeviceId());
+      // Sign the decision so the server can attribute it to this device.
+      const signature = await signDecision(id, decision, item?.params_hash ?? '').catch(() => null);
       await decide(
         id,
         decision,
         deviceId || undefined,
         reason.trim() || undefined,
         factor && code.trim() ? { factor, code: code.trim() } : undefined,
+        signature
+          ? { device_signed_at: signature.deviceSignedAt, device_signature: signature.deviceSignature }
+          : undefined,
       );
       navigate('/', { replace: true });
     } catch (err) {

@@ -73,10 +73,18 @@ export async function listDevices(): Promise<ConsentDevice[]> {
   return data.items ?? [];
 }
 
-export async function registerDevice(name: string): Promise<ConsentDevice> {
+export interface DeviceRegistration {
+  name: string;
+  public_key?: string;
+  key_alg?: string;
+}
+
+export async function registerDevice(nameOrOpts: string | DeviceRegistration): Promise<ConsentDevice> {
+  const payload: DeviceRegistration =
+    typeof nameOrOpts === 'string' ? { name: nameOrOpts } : nameOrOpts;
   const body = await request<unknown>('/devices', {
     method: 'POST',
-    body: JSON.stringify({ name }),
+    body: JSON.stringify(payload),
   });
   return unwrap<ConsentDevice>(body);
 }
@@ -86,12 +94,18 @@ export interface FactorProof {
   code: string;
 }
 
+export interface DeviceAttestation {
+  device_signed_at: string;
+  device_signature: string;
+}
+
 export async function decide(
   id: string,
   decision: 'approved' | 'rejected',
   deviceId?: string,
   reason?: string,
   proof?: FactorProof,
+  attestation?: DeviceAttestation,
 ): Promise<ConsentRequest> {
   const body = await request<unknown>(`/consents/${encodeURIComponent(id)}/decision`, {
     method: 'POST',
@@ -100,6 +114,7 @@ export async function decide(
       ...(deviceId ? { device_id: deviceId } : {}),
       ...(reason ? { reason } : {}),
       ...(proof ? { factor: proof.factor, factor_proof: proof.code } : {}),
+      ...(attestation ?? {}),
     }),
   });
   return unwrap<ConsentRequest>(body);

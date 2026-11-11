@@ -1,4 +1,5 @@
 import { listDevices, registerDevice } from './api';
+import { DEVICE_KEY_ALG, devicePublicKey } from './device_key';
 import { isDemo } from './auth';
 
 const DEVICE_KEY = 'consent.device_id';
@@ -50,7 +51,13 @@ export async function ensureDevice(): Promise<string> {
       }
       clearDeviceId();
     }
-    const device = await registerDevice(deviceName());
+    // Register the signing key too: without it the device cannot produce a
+    // verifiable approval (policies that require a device would fail closed).
+    const publicKey = await devicePublicKey();
+    const device = await registerDevice({
+      name: deviceName(),
+      ...(publicKey ? { public_key: publicKey, key_alg: DEVICE_KEY_ALG } : {}),
+    });
     try {
       localStorage.setItem(DEVICE_KEY, device.id);
     } catch {

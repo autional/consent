@@ -25,7 +25,11 @@ describe('device registration', () => {
     expect(getDeviceId()).toBe('dev-2');
     await expect(ensureDevice()).resolves.toBe('dev-2');
     expect(registerDevice).toHaveBeenCalledTimes(1);
-    expect(registerDevice).toHaveBeenCalledWith(expect.stringMatching(/^PWA /));
+    // Registration carries the name plus, when WebCrypto/IndexedDB are
+    // available, the device signing key so approvals can be attributed.
+    expect(registerDevice).toHaveBeenCalledWith(
+      expect.objectContaining({ name: expect.stringMatching(/^PWA /) }),
+    );
   });
 
   it('reuses a device that still belongs to the current user', async () => {
