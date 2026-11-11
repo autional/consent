@@ -196,3 +196,25 @@ export async function cancelConsent(id: string, reason?: string): Promise<Consen
   });
   return unwrap<ConsentRequest>(body);
 }
+
+export async function getPushVapidKey(): Promise<string> {
+  const body = await request<unknown>('/push/vapid');
+  const data = unwrap<{ public_key?: string }>(body);
+  if (!data?.public_key) throw new Error('VAPID public key missing');
+  return data.public_key;
+}
+
+export interface PushSubscriptionPayload {
+  endpoint: string;
+  keys: { p256dh: string; auth: string };
+  device_name?: string;
+  device_type?: string;
+  user_agent?: string;
+}
+
+export async function registerPushSubscription(payload: PushSubscriptionPayload): Promise<void> {
+  await request<unknown>('/push/subscriptions', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}

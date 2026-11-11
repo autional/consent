@@ -1,5 +1,7 @@
+import { useEffect } from 'react';
 import { Link, Route, Routes, useLocation } from 'react-router';
 import { beginLogin, getToken, isDemo, logout } from './lib/auth';
+import { enablePush } from './lib/push';
 import PendingPage from './pages/PendingPage';
 import ConsentPage from './pages/ConsentPage';
 import CallbackPage from './pages/CallbackPage';
@@ -39,6 +41,10 @@ function Header() {
 }
 
 export default function App() {
+  useEffect(() => {
+    void enablePush().catch(() => undefined);
+  }, []);
+
   return (
     <div className="app">
       <Header />
