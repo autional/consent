@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cancelConsent, decide, issueFactorChallenge, listConsents, listPending } from './api';
+import { cancelConsent, decide, issueFactorChallenge, listAllConsents, listConsents, listPending } from './api';
 
 vi.mock('./auth', () => ({ getToken: () => 'test-token' }));
 vi.mock('./config', () => ({
@@ -27,6 +27,12 @@ describe('consent API paths', () => {
     const f = mockFetch();
     await listConsents('approved');
     expect(f).toHaveBeenCalledWith('/bff/consent/api/v1/ops/consents?status=approved', expect.any(Object));
+  });
+
+  it('uses the platform endpoint for the cross-tenant view', async () => {
+    const f = mockFetch();
+    await listAllConsents('pending');
+    expect(f).toHaveBeenCalledWith('/bff/consent/api/v1/ops/consents/all?status=pending', expect.any(Object));
   });
 
   it('sends device_id and reason on decision', async () => {

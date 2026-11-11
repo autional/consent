@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router';
-import { AuthRequiredError, listPending } from '../lib/api';
+import { AuthRequiredError, listAllConsents, listPending } from '../lib/api';
 import { ensureDevice } from '../lib/device';
 import { beginLogin, clearToken, demoAvailable, enableDemo, getToken } from '../lib/auth';
 import { formatRemaining, riskLabel, statusLabel, type ConsentRequest } from '../lib/format';
@@ -19,6 +19,7 @@ export default function PendingPage() {
   const [error, setError] = useState('');
   const [authLost, setAuthLost] = useState(false);
   const [stream, setStream] = useState<StreamStatus>('connecting');
+  const [scope, setScope] = useState<'mine' | 'all'>('mine');
   const [loggedIn, setLoggedIn] = useState(() => Boolean(getToken()));
   const inflight = useRef(false);
 
@@ -28,7 +29,7 @@ export default function PendingPage() {
     inflight.current = true;
     setLoading(true);
     try {
-      const data = await listPending();
+      const data = scope === 'all' ? await listAllConsents('pending') : await listPending();
       setItems(data);
       setError('');
       setAuthLost(false);
@@ -47,7 +48,7 @@ export default function PendingPage() {
       inflight.current = false;
       setLoading(false);
     }
-  }, []);
+  }, [scope]);
 
   useEffect(() => {
     if (!loggedIn) return;
@@ -115,7 +116,18 @@ export default function PendingPage() {
             <span className={`stream-badge stream-${stream}`}>{STATUS_TEXT[stream]}</span>
           </p>
         </div>
-        <button className="btn btn-ghost" onClick={() => void load()}>刷新</button>
+        <div className="section-actions">
+          <button
+            className="btn btn-ghost"
+            onClick={() => {
+              setError('');
+              setScope((s) => (s === 'all' ? 'mine' : 'all'));
+            }}
+          >
+            {scope === 'all' ? '只看我的租户' : '全部租户'}
+          </button>
+          <button className="btn btn-ghost" onClick={() => void load()}>刷新</button>
+        </div>
       </div>
 
       {loading && items.length === 0 && <div className="card muted">加载中…</div>}

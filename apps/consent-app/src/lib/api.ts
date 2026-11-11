@@ -51,6 +51,19 @@ export async function listConsents(status?: string): Promise<ConsentRequest[]> {
   return data.items ?? [];
 }
 
+/**
+ * Platform operator view: every tenant's pending work. The server rejects this
+ * with 403 unless the caller belongs to the platform tenant, so the toggle that
+ * calls it can stay visible and simply report "not allowed".
+ */
+export async function listAllConsents(status?: string): Promise<ConsentRequest[]> {
+  const q = status ? `?status=${encodeURIComponent(status)}` : '';
+  const body = await request<unknown>(`/consents/all${q}`);
+  const data = unwrap<ConsentRequest[] | { items?: ConsentRequest[] }>(body);
+  if (Array.isArray(data)) return data;
+  return data.items ?? [];
+}
+
 export async function listPending(): Promise<ConsentRequest[]> {
   return listConsents('pending');
 }
