@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cancelConsent, decide, issueFactorChallenge, listAllConsents, listConsents, listPending } from './api';
+import { cancelConsent, decide, issueFactorChallenge, listAllConsents, listConsents, listConsentsPage, listPending } from './api';
 
 vi.mock('./auth', () => ({ getToken: () => 'test-token' }));
 vi.mock('./config', () => ({
@@ -33,6 +33,17 @@ describe('consent API paths', () => {
     const f = mockFetch();
     await listAllConsents('pending');
     expect(f).toHaveBeenCalledWith('/bff/consent/api/v1/ops/consents/all?status=pending', expect.any(Object));
+  });
+
+  it('asks for a bounded page and reports has_more', async () => {
+    const f = mockFetch({ items: [{ id: 'c1' }], has_more: true });
+    const page = await listConsentsPage({ status: 'pending', limit: 50, offset: 100 });
+    expect(page.hasMore).toBe(true);
+    expect(page.items).toHaveLength(1);
+    expect(f).toHaveBeenCalledWith(
+      '/bff/consent/api/v1/ops/consents?status=pending&limit=50&offset=100',
+      expect.any(Object),
+    );
   });
 
   it('sends device_id and reason on decision', async () => {

@@ -56,6 +56,33 @@ export async function listConsents(status?: string): Promise<ConsentRequest[]> {
  * with 403 unless the caller belongs to the platform tenant, so the toggle that
  * calls it can stay visible and simply report "not allowed".
  */
+export interface ConsentPage {
+  items: ConsentRequest[];
+  hasMore: boolean;
+  offset: number;
+}
+
+/**
+ * Bounded list page. Without this the UI would silently show only the first
+ * server-side page and hide the rest.
+ */
+export async function listConsentsPage(opts: {
+  status?: string;
+  offset?: number;
+  limit?: number;
+  all?: boolean;
+} = {}): Promise<ConsentPage> {
+  const params = new URLSearchParams();
+  if (opts.status) params.set('status', opts.status);
+  params.set('limit', String(opts.limit ?? 100));
+  if (opts.offset) params.set('offset', String(opts.offset));
+  const path = opts.all ? '/consents/all' : '/consents';
+  const body = await request<unknown>(`${path}?${params.toString()}`);
+  const data = unwrap<{ items?: ConsentRequest[]; has_more?: boolean } | ConsentRequest[]>(body);
+  if (Array.isArray(data)) return { items: data, hasMore: false, offset: opts.offset ?? 0 };
+  return { items: data.items ?? [], hasMore: Boolean(data.has_more), offset: opts.offset ?? 0 };
+}
+
 export async function listAllConsents(status?: string): Promise<ConsentRequest[]> {
   const q = status ? `?status=${encodeURIComponent(status)}` : '';
   const body = await request<unknown>(`/consents/all${q}`);

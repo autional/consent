@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router';
-import { AuthRequiredError, listAllConsents, listPending } from '../lib/api';
+import { AuthRequiredError, listConsentsPage } from '../lib/api';
 import { ensureDevice } from '../lib/device';
 import { beginLogin, clearToken, demoAvailable, enableDemo, getToken } from '../lib/auth';
 import { formatRemaining, riskLabel, statusLabel, type ConsentRequest } from '../lib/format';
@@ -20,8 +20,28 @@ export default function PendingPage() {
   const [authLost, setAuthLost] = useState(false);
   const [stream, setStream] = useState<StreamStatus>('connecting');
   const [scope, setScope] = useState<'mine' | 'all'>('mine');
+  const [hasMore, setHasMore] = useState(false);
   const [loggedIn, setLoggedIn] = useState(() => Boolean(getToken()));
   const inflight = useRef(false);
+
+  const loadMore = useCallback(async () => {
+    if (inflight.current) return;
+    inflight.current = true;
+    try {
+      const page = await listConsentsPage({
+        status: 'pending',
+        limit: 100,
+        offset: items.length,
+        all: scope === 'all',
+      });
+      setItems((prev) => [...prev, ...page.items]);
+      setHasMore(page.hasMore);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      inflight.current = false;
+    }
+  }, [items.length, scope]);
 
   const load = useCallback(async () => {
     if (!getToken()) return;
@@ -29,8 +49,9 @@ export default function PendingPage() {
     inflight.current = true;
     setLoading(true);
     try {
-      const data = scope === 'all' ? await listAllConsents('pending') : await listPending();
-      setItems(data);
+      const page = await listConsentsPage({ status: 'pending', limit: 100, all: scope === 'all' });
+      setItems(page.items);
+      setHasMore(page.hasMore);
       setError('');
       setAuthLost(false);
     } catch (err) {
@@ -160,6 +181,11 @@ export default function PendingPage() {
           </Link>
         ))}
       </div>
+      {hasMore && (
+        <div className="load-more">
+          <button className="btn btn-ghost" onClick={() => void loadMore()}>加载更多</button>
+        </div>
+      )}
     </section>
   );
 }
