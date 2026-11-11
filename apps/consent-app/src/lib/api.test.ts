@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cancelConsent, decide, listConsents, listPending } from './api';
+import { cancelConsent, decide, issueFactorChallenge, listConsents, listPending } from './api';
 
 vi.mock('./auth', () => ({ getToken: () => 'test-token' }));
 vi.mock('./config', () => ({
@@ -34,6 +34,24 @@ describe('consent API paths', () => {
     await decide('c1', 'approved', 'd1', 'ok');
     const [, init] = f.mock.calls[0] as unknown as [string, RequestInit];
     expect(JSON.parse(String(init.body))).toEqual({ decision: 'approved', device_id: 'd1', reason: 'ok' });
+  });
+
+  it('sends factor proof on decision', async () => {
+    const f = mockFetch({ id: 'c1', status: 'approved' });
+    await decide('c1', 'approved', 'd1', 'ok', { factor: 'sms_otp', code: '123456' });
+    const [, init] = f.mock.calls[0] as unknown as [string, RequestInit];
+    expect(JSON.parse(String(init.body))).toEqual({
+      decision: 'approved', device_id: 'd1', reason: 'ok', factor: 'sms_otp', factor_proof: '123456',
+    });
+  });
+
+  it('requests an approval challenge for this consent', async () => {
+    const f = mockFetch({ challenge_id: 'ch1', factor: 'sms_otp', expires_at: '2026-11-11T00:00:00Z' });
+    const ch = await issueFactorChallenge('c1', 'sms_otp');
+    expect(ch.challenge_id).toBe('ch1');
+    expect(f).toHaveBeenCalledWith('/bff/consent/api/v1/ops/consents/c1/factor-challenge', expect.any(Object));
+    const [, init] = f.mock.calls[0] as unknown as [string, RequestInit];
+    expect(JSON.parse(String(init.body))).toEqual({ factor: 'sms_otp' });
   });
 
   it('sends reason on cancel', async () => {
