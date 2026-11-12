@@ -13,6 +13,8 @@
 - 登录：平台 OIDC 授权码 + PKCE（`auth.autional.{cn,com}`）。
 
 - 实时更新：登录后先 `POST .../consents/stream-ticket` 换一次性票据，再 `EventSource(.../consents/stream?ticket=…)` 建流；事件只当"有变化"信号，收到即重拉列表；切到后台暂停、回到前台重连并重拉；断线指数退避（1s→30s）。状态徽标在标题旁（实时/重连中/已断开）。
+  - ⚠️ **生产两端都拿不到流**：`.cn` 经香港 nginx、`.com` 经 Vercel rewrite，都会缓冲 SSE 响应（实测：连响应头都不下发，`EventSource` 永远停在 connecting 且不触发 `onerror`）。网关与 consent 侧都已放行（`/bff/consent/api/v1/ops/consents/stream` 为 public + 服务内票据校验），问题纯在边缘。
+  - 因此前端有 **30s 轮询兜底**（`VITE_CONSENT_POLL_MS`，0=关闭，标签页隐藏时跳过）；SSE 只当作加速通道，边缘修好后自动恢复实时，无需改前端。
 - 登录过期：接口 401 会清 token 并显示「重新登录」，不再出现"提示过期但无出口"。
 - 页面：`/` 待确认列表、`/c/:id` 确认详情、`/oauth/callback` 登录回调。
 - API：`/bff/ops/v1/consents*`（`.com` 由 Vercel rewrite、`.cn` 由香港 nginx 反代 → `API_ORIGIN`）。
