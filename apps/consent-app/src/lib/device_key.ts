@@ -55,19 +55,35 @@ function idbPut(key: string, value: unknown): Promise<void> {
   );
 }
 
-/** Load the device signing key, creating it on first use. */
-export async function ensureDeviceKey(): Promise<CryptoKey | null> {
+function idbDelete(key: string): Promise<void> {
+  return openDB().then(
+    (db) =>
+      new Promise<void>((resolve, reject) => {
+        const tx = db.transaction(STORE, 'readwrite');
+        tx.objectStore(STORE).delete(key);
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+      }),
+  );
+}
+
+/** Load the device signing pair, creating it on first use. */
+async function ensureDeviceKeyPair(): Promise<CryptoKeyPair | null> {
   if (typeof indexedDB === 'undefined' || !globalThis.crypto?.subtle) return null;
   try {
-    const existing = await idbGet<CryptoKey>(RECORD);
-    if (existing) return existing;
-    const pair = await crypto.subtle.generateKey(
+    const existing = await idbGet<CryptoKeyPair | CryptoKey>(RECORD);
+    if (existing && 'privateKey' in existing) return existing;
+    // Legacy record stored only the non-extractable private key. It can still
+    // sign, but its public key cannot be exported for registration; replace it
+    // so device-bound policies can verify the approval.
+    if (existing) await idbDelete(RECORD);
+    const pair = (await crypto.subtle.generateKey(
       { name: 'ECDSA', namedCurve: 'P-256' },
-      false, // private key never leaves the browser
-      ['sign'],
-    );
-    await idbPut(RECORD, pair.privateKey);
-    return pair.privateKey;
+      true,
+      ['sign', 'verify'],
+    )) as CryptoKeyPair;
+    await idbPut(RECORD, pair);
+    return pair;
   } catch {
     // Private mode / storage denied: approvals fall back to unsigned, which the
     // server rejects only for policies that require a device-bound approval.
@@ -75,13 +91,17 @@ export async function ensureDeviceKey(): Promise<CryptoKey | null> {
   }
 }
 
+/** Load the device signing key, creating it on first use. */
+export async function ensureDeviceKey(): Promise<CryptoKey | null> {
+  return (await ensureDeviceKeyPair())?.privateKey ?? null;
+}
+
 /** SPKI public key (base64) for registration. */
 export async function devicePublicKey(): Promise<string> {
-  if (typeof indexedDB === 'undefined' || !globalThis.crypto?.subtle) return '';
-  const key = await ensureDeviceKey();
-  if (!key) return '';
+  const pair = await ensureDeviceKeyPair();
+  if (!pair) return '';
   try {
-    const spki = await crypto.subtle.exportKey('spki', key);
+    const spki = await crypto.subtle.exportKey('spki', pair.publicKey);
     return b64(spki);
   } catch {
     return '';

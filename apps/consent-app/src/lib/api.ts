@@ -104,6 +104,8 @@ export async function getConsent(id: string): Promise<ConsentRequest> {
 export interface ConsentDevice {
   id: string;
   name: string;
+  public_key?: string;
+  key_alg?: string;
   revoked_at?: string | null;
 }
 
