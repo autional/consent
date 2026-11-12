@@ -10,7 +10,7 @@ self.skipWaiting();
 clientsClaim();
 
 self.addEventListener('push', (event: PushEvent) => {
-  let payload: { title?: string; body?: string; url?: string } = {};
+  let payload: { title?: string; body?: string; url?: string; data?: { url?: string } } = {};
   try {
     payload = (event.data?.json() ?? {}) as typeof payload;
   } catch {
@@ -18,7 +18,9 @@ self.addEventListener('push', (event: PushEvent) => {
   }
   const title = payload.title || '需要确认';
   const body = payload.body || '有一条高风险操作等待处理';
-  const url = payload.url || '/';
+  // communication wraps the consent id/url under "data"; accept both shapes
+  // so older senders and the current WebPushProvider both deep-link correctly.
+  const url = payload.url || payload.data?.url || '/';
   event.waitUntil(
     self.registration.showNotification(title, {
       body,
