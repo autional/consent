@@ -44,7 +44,7 @@ export async function ensureDevice(): Promise<string> {
     if (existing) {
       try {
         const devices = await listDevices();
-        if (devices.some((d) => d.id === existing && !d.revoked_at && d.public_key)) return existing;
+        if (devices.some((d) => d.id === existing && !d.revoked_at && (d.public_key === undefined || d.public_key))) return existing;
       } catch {
         // Network/verifier issues: keep the cached id rather than blocking the UI.
         return existing;
