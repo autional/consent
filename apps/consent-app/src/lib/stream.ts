@@ -11,6 +11,23 @@ export interface StreamHandle {
 
 const EVENT_KINDS = ['pending', 'decided', 'canceled', 'resync'];
 
+/**
+ * Safety-net poll interval. SSE cannot be relied on in production: both edges
+ * buffer the stream (`.cn` via the HK nginx, `.com` via a Vercel rewrite), so
+ * the EventSource stays in `connecting` forever and never errors. Polling keeps
+ * the list fresh regardless; when SSE does work it just makes updates instant.
+ * `VITE_CONSENT_POLL_MS=0` disables polling.
+ */
+const DEFAULT_POLL_MS = 30_000;
+const MIN_POLL_MS = 5_000;
+
+function pollIntervalMs(): number {
+  const raw = Number(getConfig().VITE_CONSENT_POLL_MS);
+  if (Number.isFinite(raw) && raw === 0) return 0;
+  if (Number.isFinite(raw) && raw >= MIN_POLL_MS) return raw;
+  return DEFAULT_POLL_MS;
+}
+
 function streamURL(): string {
   const base = getConfig().VITE_CONSENT_BASE_URL || '/bff/ops/v1';
   return `${base}/consents/stream`;
@@ -34,7 +51,26 @@ export function openConsentStream(opts: {
   let paused = false;
   let es: EventSource | null = null;
   let timer: ReturnType<typeof setTimeout> | null = null;
+  let pollTimer: ReturnType<typeof setInterval> | null = null;
   let retry = 0;
+
+  const pollMs = pollIntervalMs();
+
+  const startPolling = () => {
+    if (pollTimer || closed || paused || pollMs <= 0) return;
+    pollTimer = setInterval(() => {
+      if (closed || paused) return;
+      if (typeof document !== 'undefined' && document.hidden) return;
+      opts.onChange();
+    }, pollMs);
+  };
+
+  const stopPolling = () => {
+    if (pollTimer) {
+      clearInterval(pollTimer);
+      pollTimer = null;
+    }
+  };
 
   const schedule = () => {
     if (closed || paused) return;
@@ -83,22 +119,26 @@ export function openConsentStream(opts: {
   };
 
   void connect();
+  startPolling();
 
   return {
     close() {
       closed = true;
       teardown();
+      stopPolling();
       opts.onStatus?.('closed');
     },
     pause() {
       paused = true;
       teardown();
+      stopPolling();
     },
     resume() {
       if (closed || !paused) return;
       paused = false;
       retry = 0;
       void connect();
+      startPolling();
     },
   };
 }

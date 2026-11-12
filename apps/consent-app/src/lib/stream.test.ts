@@ -97,4 +97,32 @@ describe('openConsentStream', () => {
     expect(FakeEventSource.instances.length).toBe(2);
     handle.close();
   });
+
+  // 两端边缘（HK nginx / Vercel）都会缓冲 SSE，EventSource 会一直停在 connecting
+  // 且不触发 onerror。轮询是兜底，必须无条件生效。
+  it('polls on an interval as a safety net', async () => {
+    vi.useFakeTimers();
+    const onChange = vi.fn();
+    const handle = openConsentStream({ onChange });
+    await vi.advanceTimersByTimeAsync(30_000);
+    expect(onChange).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(30_000);
+    expect(onChange).toHaveBeenCalledTimes(2);
+    handle.close();
+  });
+
+  it('stops polling while paused and after close', async () => {
+    vi.useFakeTimers();
+    const onChange = vi.fn();
+    const handle = openConsentStream({ onChange });
+    handle.pause();
+    await vi.advanceTimersByTimeAsync(90_000);
+    expect(onChange).not.toHaveBeenCalled();
+    handle.resume();
+    await vi.advanceTimersByTimeAsync(30_000);
+    expect(onChange).toHaveBeenCalledTimes(1);
+    handle.close();
+    await vi.advanceTimersByTimeAsync(90_000);
+    expect(onChange).toHaveBeenCalledTimes(1);
+  });
 });
