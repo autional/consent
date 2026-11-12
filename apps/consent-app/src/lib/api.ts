@@ -166,6 +166,7 @@ export interface FactorChallenge {
   factor: string;
   expires_at: string;
   destination?: string;
+  public_key_options?: unknown;
   max_attempts?: number;
 }
 

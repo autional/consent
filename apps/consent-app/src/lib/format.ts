@@ -17,6 +17,8 @@ export interface ConsentRequest {
   tenant_id?: string;
   /** Floor set by the caller; the effective factor may be higher (policy). */
   required_factor?: string;
+  /** Concrete channels allowed by the effective policy (may include webauthn). */
+  accepted_factors?: string[];
   external_action_id?: string;
   summary?: string;
 }

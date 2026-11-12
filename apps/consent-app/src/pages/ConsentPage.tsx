@@ -4,6 +4,7 @@ import { AuthRequiredError, cancelConsent, decide, getConsent, issueFactorChalle
 import { beginLogin, getToken } from '../lib/auth';
 import { ensureDevice, getDeviceId } from '../lib/device';
 import { signDecision } from '../lib/device_key';
+import { getConsentAssertion } from '../lib/webauthn';
 import {
   formatRemaining,
   riskLabel,
@@ -25,6 +26,7 @@ export default function ConsentPage() {
   const [codeSent, setCodeSent] = useState('');
   const [codeError, setCodeError] = useState('');
   const [sendingCode, setSendingCode] = useState(false);
+  const [webauthnBusy, setWebauthnBusy] = useState(false);
 
   useEffect(() => {
     if (!getToken()) {
@@ -68,6 +70,36 @@ export default function ConsentPage() {
       setCodeError(err instanceof Error ? err.message : String(err));
     } finally {
       setSendingCode(false);
+    }
+  }
+
+  async function onWebAuthn() {
+    if (!item) return;
+    setWebauthnBusy(true);
+    setError('');
+    try {
+      const ch = await issueFactorChallenge(id, 'webauthn');
+      const payload = ch.destination ? JSON.parse(ch.destination) : {};
+      const challengeId = payload.challenge_id || ch.challenge_id;
+      const options = payload.public_key_options || ch.public_key_options;
+      const proof = await getConsentAssertion(challengeId, options);
+      const deviceId = await ensureDevice().catch(() => getDeviceId());
+      const signature = await signDecision(id, 'approved', item.params_hash ?? '').catch(() => null);
+      await decide(
+        id,
+        'approved',
+        deviceId || undefined,
+        reason.trim() || undefined,
+        { factor: 'webauthn', code: JSON.stringify(proof) },
+        signature
+          ? { device_signed_at: signature.deviceSignedAt, device_signature: signature.deviceSignature }
+          : undefined,
+      );
+      navigate('/', { replace: true });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setWebauthnBusy(false);
     }
   }
 
@@ -189,6 +221,13 @@ export default function ConsentPage() {
             {codeSent && <span className="muted">已发送至 {codeSent}</span>}
             {codeError && <span className="error">{codeError}</span>}
           </div>
+          {(item.accepted_factors?.includes('webauthn') || item.required_factor === 'webauthn') && (
+            <div className="actions">
+              <button className="btn btn-primary" disabled={Boolean(webauthnBusy || submitting)} onClick={onWebAuthn}>
+                {webauthnBusy ? '等待通行密钥…' : '使用通行密钥'}
+              </button>
+            </div>
+          )}
           <div className="actions">
           <button
             className="btn btn-danger"
