@@ -1,6 +1,6 @@
 name: CI
 
-# 单仓完整 CI：test / typecheck / a11y / build。
+# 单仓 CI：test / typecheck / a11y。
 # 原 a11y.yml（最小闸门）已并入本文件，避免两套流水线重复安装依赖。
 #
 # 注意：该仓（根 package.json）**没有 lint 脚本**，只有 app 的 lint:a11y（eslint + jsx-a11y）。
@@ -42,7 +42,7 @@ jobs:
       - name: A11y lint
         run: pnpm --filter @autional/consent-app run lint:a11y
 
-      # build 不依赖真实部署 env：scripts/env.mjs 仅在 VERCEL_ENV=production 或
-      # AUTIONAL_STRICT_ENV=1 时 fail-closed，CI 里走兜底值（本地实测 exit 0）。
-      - name: Build
-        run: pnpm --filter @autional/consent-app run build
+      # 不含 build：apps/consent-app 的 build = scripts/gen-env.mjs + scripts/env.mjs，
+      # 需要部署态 env（REGION / SITE_URL / API_ORIGIN / VITE_OAUTH_CLIENT_ID）。
+      # 这些变量只在部署平台配置；在 CI 里跑 build 只会走本地兜底值（cn 兜底产物，无意义），
+      # 故本 workflow 只做 test / typecheck / a11y 闸门，构建交给 Vercel 部署流水线。
