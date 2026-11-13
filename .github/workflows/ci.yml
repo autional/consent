@@ -1,0 +1,48 @@
+name: CI
+
+# 单仓完整 CI：test / typecheck / a11y / build。
+# 原 a11y.yml（最小闸门）已并入本文件，避免两套流水线重复安装依赖。
+#
+# 注意：该仓（根 package.json）**没有 lint 脚本**，只有 app 的 lint:a11y（eslint + jsx-a11y）。
+# 因此这里不跑通用的 `pnpm lint`，只跑 lint:a11y。
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # pnpm 版本由根 package.json 的 packageManager 提供（唯一真源），此处不再指定 version。
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Test
+        run: pnpm test
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      # 无障碍闸门（AC C-28 / ui-denominator U4）：jsx-a11y recommended，0 error/warn 才算过。
+      - name: A11y lint
+        run: pnpm --filter @autional/consent-app run lint:a11y
+
+      # build 不依赖真实部署 env：scripts/env.mjs 仅在 VERCEL_ENV=production 或
+      # AUTIONAL_STRICT_ENV=1 时 fail-closed，CI 里走兜底值（本地实测 exit 0）。
+      - name: Build
+        run: pnpm --filter @autional/consent-app run build
