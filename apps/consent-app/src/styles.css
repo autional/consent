@@ -95,6 +95,12 @@ h2 { font-size: 17px; margin: 0 0 8px; }
 .actions { display: flex; gap: 10px; justify-content: flex-end; margin: 18px 0 10px; }
 .field { display: grid; gap: 6px; margin-top: 14px; }
 .reason-input { width: 100%; box-sizing: border-box; resize: vertical; border: 1px solid var(--border); background: var(--surface-2); color: var(--text); border-radius: 10px; padding: 9px 12px; font: inherit; }
+/* 通道选择（仅当策略允许两个以上具体通道时出现）：与 .field 同节奏，去掉 fieldset 默认边框。 */
+.channel-group { border: 0; padding: 0; margin: 14px 0 0; }
+.channel-group > legend { padding: 0; }
+.channel-options { display: flex; gap: 14px; flex-wrap: wrap; }
+.channel-option { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+.channel-option input { accent-color: var(--primary); margin: 0; }
 
 .btn {
   appearance: none; border: 1px solid var(--border); background: var(--surface-2);

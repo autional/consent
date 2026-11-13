@@ -5,6 +5,7 @@ import { beginLogin, getToken } from '../lib/auth';
 import { ensureDevice, getDeviceId } from '../lib/device';
 import { signDecision } from '../lib/device_key';
 import { getConsentAssertion } from '../lib/webauthn';
+import { availableFactors, factorLabel, resolveFactor } from '../lib/factors';
 import {
   formatRemaining,
   riskLabel,
@@ -21,6 +22,7 @@ export default function ConsentPage() {
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState<'approved' | 'rejected' | 'canceled' | ''>('');
   const [reason, setReason] = useState('');
+  // 选择器里的显式选择；空串表示「沿用默认通道」，真正的通道由 lib/factors 解析。
   const [factor, setFactor] = useState('');
   const [code, setCode] = useState('');
   const [codeSent, setCodeSent] = useState('');
@@ -59,7 +61,8 @@ export default function ConsentPage() {
   }, [id]);
 
   async function onSendCode() {
-    const next = factor || item?.required_factor || 'sms_otp';
+    // 双通道时用选择器的值；单通道/无通道时沿用默认通道（旧行为不变）。
+    const next = resolveFactor(item, factor);
     setSendingCode(true);
     setCodeError('');
     try {
@@ -115,12 +118,14 @@ export default function ConsentPage() {
       const deviceId = await ensureDevice().catch(() => getDeviceId());
       // Sign the decision so the server can attribute it to this device.
       const signature = await signDecision(id, decision, item?.params_hash ?? '').catch(() => null);
+      // 通道与 challenge 保持一致：双通道时取选择器的值，否则取默认通道。
+      const proofFactor = resolveFactor(item, factor);
       await decide(
         id,
         decision,
         deviceId || undefined,
         reason.trim() || undefined,
-        factor && code.trim() ? { factor, code: code.trim() } : undefined,
+        code.trim() ? { factor: proofFactor, code: code.trim() } : undefined,
         signature
           ? { device_signed_at: signature.deviceSignedAt, device_signature: signature.deviceSignature }
           : undefined,
@@ -159,6 +164,9 @@ export default function ConsentPage() {
   if (!item) return <div className="card">请求不存在。</div>;
 
   const pending = item.status === 'pending';
+  // 策略下发的具体通道（读 accepted_factors，缺失回退 required_factor）。
+  const channels = availableFactors(item);
+  const effectiveFactor = resolveFactor(item, factor);
 
   return (
     <section className="card detail">
@@ -204,6 +212,26 @@ export default function ConsentPage() {
               placeholder="填写批准/拒绝/撤销原因"
             />
           </label>
+          {channels.length > 1 && (
+            <fieldset className="field channel-group">
+              <legend className="muted">确认通道</legend>
+              <div className="channel-options">
+                {channels.map((option) => (
+                  <label key={option} className="channel-option">
+                    <input
+                      type="radio"
+                      name="consent-factor"
+                      value={option}
+                      checked={effectiveFactor === option}
+                      onChange={() => setFactor(option)}
+                      disabled={Boolean(submitting || sendingCode)}
+                    />
+                    <span>{factorLabel(option)}</span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+          )}
           <div className="field">
             <span className="muted">确认码（敏感动作需要）</span>
             <div className="actions">
@@ -215,7 +243,7 @@ export default function ConsentPage() {
                 placeholder="6 位验证码"
               />
               <button className="btn btn-ghost" disabled={sendingCode} onClick={onSendCode}>
-                {sendingCode ? '发送中…' : '发送验证码'}
+                {sendingCode ? '发送中…' : effectiveFactor === 'email_link' ? '发送链接' : '发送验证码'}
               </button>
             </div>
             {codeSent && <span className="muted">已发送至 {codeSent}</span>}
